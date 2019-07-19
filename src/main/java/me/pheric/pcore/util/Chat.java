@@ -1,5 +1,6 @@
 package me.pheric.pcore.util;
 
+import jdk.internal.joptsimple.internal.Strings;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -48,7 +49,7 @@ public final class Chat {
 
     // Overload
     public static List<String> color(List<String> arg) {
-        return color(arg);
+        return color((String[])arg.toArray());
     }
 
     /**
@@ -96,6 +97,7 @@ public final class Chat {
      * @return Successful
      */
     public boolean sendMessage(UUID uuid, String... msg) {
+        System.out.println("Sending messages: " + Strings.join(msg, "; "));
         Player tgt;
         try {
             tgt = Bukkit.getPlayer(uuid);
@@ -115,16 +117,20 @@ public final class Chat {
 
     // Overload
     public boolean sendMessage(CommandSender sender, String... msg) {
+        if (sender == null) return false;
+
         if (sender instanceof Player) {
-            return sendMessage((Player) sender, msg);
+            return sendMessage(sender, msg);
+        } else {
+            for (String line : msg) sender.sendMessage(process(line));
         }
-        return false;
+        return true;
     }
 
     /**
      * Sends a message to a group of players
      *
-     * @param tgts A {@link List< Player >} of players to send the message to
+     * @param tgts A {@link List<Player>} of players to send the message to
      * @param msg  Message to send
      */
     public void broadcastToGroup(List<Player> tgts, String... msg) {
