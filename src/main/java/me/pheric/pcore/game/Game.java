@@ -15,7 +15,7 @@ public class Game {
     private TeamManager teamManager;
     private GUserManager userManager;
 
-    Game(JavaPlugin plugin, int minPlayersToStart, int maxPlayers, TeamManager tm, GUserManager userManager) {
+    public Game(JavaPlugin plugin, int minPlayersToStart, int maxPlayers, TeamManager tm, GUserManager userManager) {
         this.userManager = userManager;
         teamManager = tm;
 
