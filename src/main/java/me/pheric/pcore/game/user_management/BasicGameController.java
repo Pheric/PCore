@@ -62,7 +62,7 @@ public class BasicGameController implements Listener {
         }
         Bukkit.broadcastMessage(ChatColor.translateAlternateColorCodes('&', GameChatFormat.JOIN.getFormat() + event.getPlayer().getDisplayName() + info));
 
-        if (game.getTeamManager().getTeams().stream().allMatch(t -> t.isFull() && t.getPlayers().size() >= minPlayersToStart) && game.getState() == JOIN_WAIT) {
+        if (game.getTeamManager().getTeams().stream().allMatch(t -> t.isAboveMinimums() && t.getPlayers().size() >= minPlayersToStart) && game.getState() == JOIN_WAIT) {
             game.setState(State.JOIN_CLOSED);
         }
 
