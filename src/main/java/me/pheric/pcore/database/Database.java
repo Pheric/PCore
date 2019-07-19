@@ -1,6 +1,9 @@
 package me.pheric.pcore.database;
 
+import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import lombok.Builder;
+import lombok.Getter;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -28,21 +31,25 @@ public class Database {
     /**
      * Initializes the class
      *
-     * @param jdbcUrl  The JDBC URL for connecting, usually in the following format:
-     *                 jdbc:mysql://hostname:port/database
-     * @param username The username of this MySQL connection
-     * @param password The password of this MySQL connection
+     * @param config the hikari config used for settings such as poolName, or the jdbcUrl!
      */
-    public Database(String jdbcUrl, String username, String password) {
-        dataSource = new HikariDataSource();
-        dataSource.setDriverClassName("com.mysql.jdbc.Driver");
-        dataSource.setJdbcUrl(jdbcUrl);
-        dataSource.setUsername(username);
-        dataSource.setPassword(password);
-        dataSource.setPoolName("Core");
+    public Database(HikariConfig config) {
+        dataSource = new HikariDataSource(config);
+    }
+
+    @Builder
+    public Database(String name, String jdbcUrl, String username, String password) {
+        HikariConfig config = new HikariDataSource();
+        config.setDriverClassName("com.mysql.jdbc.Driver");
+        config.setJdbcUrl(jdbcUrl);
+        config.setUsername(username);
+        config.setPassword(password);
+        config.setPoolName(name);
 
         // Configuration settings for the HikariDataSource
-        dataSource.setMaximumPoolSize(10);
+        config.setMaximumPoolSize(10);
+
+        dataSource = new HikariDataSource(config);
     }
 
     /**
@@ -52,7 +59,7 @@ public class Database {
      * @param params The parameters to sanitize in the query
      * @return Returns -1 if there was an error, 0 if nothing was updated and vice-versa for 1
      */
-    int update(String query, Object... params) {
+    public int update(String query, Object... params) {
         // Try-resources block to automatically close the connection and prepared statement
         try (Connection connection = getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
@@ -78,7 +85,7 @@ public class Database {
      * @param params The parameters to sanitize in the query
      * @return A result object with all the data stored in it
      */
-    Result find(String query, Object... params) {
+    public Result find(String query, Object... params) {
         // Try-resources block to automatically close the connection and prepared statement
         try (Connection connection = getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
@@ -118,7 +125,7 @@ public class Database {
      * @param params The parameters to sanitize in the query
      * @return An array of results with the data returned
      */
-    Collection<Result> findAll(String query, Object... params) {
+    public Collection<Result> findAll(String query, Object... params) {
         try (Connection connection = getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
             for (int i = 0; i < params.length; i++) {
@@ -156,7 +163,7 @@ public class Database {
     /**
      * Clean and dispose of all extra data floating about
      */
-    void dispose() {
+    public void dispose() {
         getDataSource().close();
     }
 
@@ -165,7 +172,7 @@ public class Database {
      *
      * @return The dataSource that returns connections for this database object
      */
-    private HikariDataSource getDataSource() {
+    public HikariDataSource getDataSource() {
         return dataSource;
     }
 }
