@@ -97,7 +97,6 @@ public final class Chat {
      * @return Successful
      */
     public boolean sendMessage(UUID uuid, String... msg) {
-        System.out.println("Sending messages: " + Strings.join(msg, "; "));
         Player tgt;
         try {
             tgt = Bukkit.getPlayer(uuid);
@@ -120,7 +119,7 @@ public final class Chat {
         if (sender == null) return false;
 
         if (sender instanceof Player) {
-            return sendMessage(sender, msg);
+            return sendMessage((Player)sender, msg);
         } else {
             for (String line : msg) sender.sendMessage(process(line));
         }

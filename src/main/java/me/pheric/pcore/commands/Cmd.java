@@ -1,5 +1,6 @@
 package me.pheric.pcore.commands;
 
+import jdk.internal.joptsimple.internal.Strings;
 import me.pheric.pcore.util.Chat;
 import org.apache.commons.lang.ArrayUtils;
 import org.bukkit.Bukkit;
@@ -102,10 +103,12 @@ final class Cmd extends org.bukkit.command.Command {
 
         Object[] invocationParameters = new Object[commandBody.getParameterCount()];
         int commandBodyParameterIndex = 0;
-        for (int commandArgumentsIndex = 0; commandArgumentsIndex < args.length && commandBodyParameterIndex < commandBody.getParameterCount(); ) {
+        //System.out.println(String.format("commandBody.getParameterCount() = %d; args.length = %d", commandBody.getParameterCount(), args.length));
+        for (int commandArgumentsIndex = 0; commandBodyParameterIndex < commandBody.getParameterCount() && (commandArgumentsIndex < args.length || args.length == 0); ) {
             Parameter parameterAtCurrentIndex = commandBody.getParameters()[commandBodyParameterIndex];
             Argument parameterArgAnnotation = parameterAtCurrentIndex.getAnnotation(Argument.class);
             if (parameterArgAnnotation == null) {
+                //System.out.println(String.format("parameterArgAnnotation[%d] is null. commandBodyParameterIndex++", commandBodyParameterIndex));
                 commandBodyParameterIndex++; // Skip to next parameter, ignoring this one
                 continue;
             }
@@ -144,6 +147,8 @@ final class Cmd extends org.bukkit.command.Command {
                 invocationParameters[commandBodyParameterIndex] = Arrays.copyOfRange(args, parameterArgAnnotation.argSliceStart(), args.length);
                 commandBodyParameterIndex++;
             }
+
+            //System.out.println(String.format("commandArgumentsIndex = %d; commandBodyParameterIndex = %d;", commandArgumentsIndex, commandBodyParameterIndex));
         }
 
         try {
