@@ -48,7 +48,7 @@ public class BasicGameController implements Listener {
         switch (game.getState()) {
             case JOIN_WAIT:
             case JOIN_CLOSED:
-                if (game.getTeamManager().autoAddPlayer(event.getPlayer())) {
+                if (game.getTeamManager().autoAddPlayer(event.getPlayer()) || game.getUserManager().getGameUser(event.getPlayer()).isPresent()) {
                     info = getTeamCountFormatted();
                 } else {
                     event.getPlayer().kickPlayer("Game full!"); // TODO: Make this better
@@ -122,22 +122,14 @@ public class BasicGameController implements Listener {
 
     @EventHandler // Cancel all damage caused by / to spectators
     public void onDamage(EntityDamageByEntityEvent event) {
-        if (event.getCause() == EntityDamageEvent.DamageCause.ENTITY_ATTACK) {
-            if (!(event.getDamager() instanceof Player) || !(event.getEntity() instanceof Player)) {
-                return;
-            }
-            Optional<GameUser> damaged = game.getUserManager().getGameUser((Player) event.getEntity());
-            Optional<GameUser> damager = game.getUserManager().getGameUser((Player) event.getDamager());
-            if (!damaged.isPresent() || !damager.isPresent()) {
-                // Uhhhhhhhh
-                Bukkit.getLogger().log(Level.WARNING, "Error on EntityDamageByEntityEvent in BasicGameController#onDamage: " + (damaged.isPresent() ? "damaging GameUser isn't present! " : "damaged GameUser isn't present! ") + event.getDamager().getUniqueId() + " | " + event.getEntity().getUniqueId());
-                event.setCancelled(true);
-            }
+        Optional<GameUser> damager = Optional.empty(), damaged = Optional.empty();
 
-            if (damaged.get().getMode() == GameUser.Mode.SPECTATOR || damager.get().getMode() == GameUser.Mode.SPECTATOR) {
-                event.setCancelled(true);
-            }
-        }
+        if (event.getEntity() instanceof Player) damaged = game.getUserManager().getGameUser((Player)event.getEntity());
+        if (event.getDamager() instanceof Player) damager = game.getUserManager().getGameUser((Player)event.getDamager());
+
+        if (damager.isPresent() && damager.get().getMode() == GameUser.Mode.SPECTATOR
+                || damaged.isPresent() && damaged.get().getMode() == GameUser.Mode.SPECTATOR)
+            event.setCancelled(true);
     }
 
     @EventHandler
