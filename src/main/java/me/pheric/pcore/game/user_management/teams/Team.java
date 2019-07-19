@@ -177,6 +177,15 @@ public class Team {
     }
 
     /**
+     * Whether the team size is above the minimum
+     *
+     * @return whether the team size is above the minimum
+     */
+    public boolean isFull() {
+        return players.size() >= minPlayersThreshold;
+    }
+
+    /**
      * Gets the max score threshold
      *
      * @return max score threshold

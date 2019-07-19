@@ -13,14 +13,12 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.Optional;
-import java.util.logging.Level;
 
 import static me.pheric.pcore.game.State.JOIN_WAIT;
 
@@ -64,7 +62,7 @@ public class BasicGameController implements Listener {
         }
         Bukkit.broadcastMessage(ChatColor.translateAlternateColorCodes('&', GameChatFormat.JOIN.getFormat() + event.getPlayer().getDisplayName() + info));
 
-        if (game.getTeamManager().getTeams().stream().allMatch(t -> t.getPlayers().size() > t.getMinPlayersThreshold() && t.getPlayers().size() > minPlayersToStart) && game.getState() == JOIN_WAIT) {
+        if (game.getTeamManager().getTeams().stream().allMatch(t -> t.isFull() && t.getPlayers().size() >= minPlayersToStart) && game.getState() == JOIN_WAIT) {
             game.setState(State.JOIN_CLOSED);
         }
 
@@ -143,11 +141,11 @@ public class BasicGameController implements Listener {
         StringBuilder ret = new StringBuilder("&7(");
         boolean first = true;
         for (Team t : game.getTeamManager().getTeams()) {
-            ret.append(String.format("&7%s&%s%d", first ? "" : "/", t.getTeamColor().getTeamChatColor().getChar(), t.getPlayers().size()));
+            ret.append(String.format("&7%s&%s%c", first ? "" : "/", t.getTeamColor().getTeamChatColor().getChar(), t.isFull() ? '*' : t.getPlayers().size()));
 
             first = false;
         }
-        ret.append("&7/&l").append(game.getTeamManager().getMaxTeamSize()).append("&7)");
+        ret.append("&7/&l").append(game.getTeamManager().getMinTeamSize()).append("&7)");
         return ret.toString();
     }
 }

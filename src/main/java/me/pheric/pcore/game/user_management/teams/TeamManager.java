@@ -43,7 +43,7 @@ public class TeamManager {
         t.setMaxScoreThreshold(maxScoreThreshold);
         t.setMinPlayersThreshold(minTeamSize);
 
-        return true;
+        return registerTeam(t);
     }
 
     /**
@@ -94,6 +94,15 @@ public class TeamManager {
      */
     public int getMaxTeamSize() {
         return maxTeamSize;
+    }
+
+    /**
+     * Gets the minimum number of players per team.
+     *
+     * @return The minimum number of players in a team.
+     */
+    public int getMinTeamSize() {
+        return minTeamSize;
     }
 
     /**
