@@ -74,6 +74,9 @@ public class BasicGameController implements Listener {
         Optional<GameUser> user = game.getUserManager().getGameUser(event.getPlayer());
         if (!user.isPresent()) return;
         game.getUserManager().removeGameUser(user.get());
+
+        game.getTeamManager().getPlayerTeam(event.getPlayer()).ifPresent(team -> team.removePlayer(event.getPlayer()));
+
         Bukkit.getPluginManager().callEvent(new GameUserLeaveEvent(game, user.get()));
         Bukkit.broadcastMessage(GameChatFormat.QUIT.getFormat() + event.getPlayer().getDisplayName());
     }

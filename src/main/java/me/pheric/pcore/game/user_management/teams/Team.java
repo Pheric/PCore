@@ -26,6 +26,7 @@ public class Team {
     private int maxPlayers;
     private long maxScoreThreshold = Long.MAX_VALUE;
     private int scoreMultiplier = 1;
+    private boolean disabled = false;
 
     private List<Player> players = new ArrayList<>();
     private long score = 0;
@@ -110,13 +111,36 @@ public class Team {
      *
      * @param p The player to remove.
      * @see Team#setMinPlayersThreshold(int)
+     * @return success
      */
-    public void removePlayer(Player p) {
-        players.remove(p);
+    public boolean removePlayer(Player p) {
+        if (isSizeLocked()) return false;
+        boolean ret = players.remove(p);
 
-        if (players.size() <= minPlayersThreshold) {
+        if (players.size() <= minPlayersThreshold && ret)
             Bukkit.getPluginManager().callEvent(new TeamSizeBelowThresholdEvent(this, p));
-        }
+
+        return ret;
+    }
+
+    /**
+     * Overload. See original. Normally, this function would fail if the Team is size locked.
+     * This function adds a parameter allowing the caller to disable this check.
+     *
+     * @param p The player to remove.
+     * @param ovr Whether to ignore the size lock
+     * @see Team#setMinPlayersThreshold(int)
+     * @see Team#removePlayer(Player)
+     * @return success
+     */
+    public boolean removePlayer(Player p, boolean ovr) {
+        if (isSizeLocked() && !ovr) return false;
+        boolean ret = players.remove(p);
+
+        if (players.size() <= minPlayersThreshold && ret)
+            Bukkit.getPluginManager().callEvent(new TeamSizeBelowThresholdEvent(this, p));
+
+        return ret;
     }
 
     /**
@@ -228,6 +252,25 @@ public class Team {
      */
     public int getScoreMultiplier() {
         return scoreMultiplier;
+    }
+
+    /**
+     * Whether the Team is size locked (players will not automatically join or leave this team)
+     *
+     * @return status
+     */
+    public boolean isSizeLocked() {
+        return disabled;
+    }
+
+    /**
+     * Sets whether the Team is size locked
+     *
+     * @param disabled whether the Team is size locked
+     * @return updated state
+     */
+    public boolean setSizeLocked(boolean disabled) {
+        return this.disabled = disabled;
     }
 
     private ItemStack getColoredMaterial(Material material) {

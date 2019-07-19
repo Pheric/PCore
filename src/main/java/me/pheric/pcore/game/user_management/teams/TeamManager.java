@@ -55,6 +55,8 @@ public class TeamManager {
     public boolean autoAddPlayer(Player p) {
         Team lowest = null;
         for (Team t : teams) {
+            if (t.isSizeLocked()) continue;
+
             if (t.getPlayers().size() < t.getMaxPlayers()) {
                 if (lowest == null || t.getPlayers().size() < lowest.getPlayers().size()) {
                     lowest = t;
