@@ -1,5 +1,6 @@
 package me.pheric.pcore.game.user_management.teams;
 
+import jdk.internal.jline.internal.Nullable;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
@@ -122,6 +123,19 @@ public class TeamManager {
      */
     public boolean isTeamRegistered(String teamName) {
         return teams.stream().anyMatch(t -> t.getTeamName().equals(teamName));
+    }
+
+    /**
+     * Transfers a Player from one Team to another.
+     * @param p the Player to transfer
+     * @param target the team to add the player to (or null)
+     * @param force whether to override Team size checks and locks
+     */
+    public void transferPlayer(Player p, @Nullable Team target, boolean force) {
+        Optional<Team> original = getPlayerTeam(p);
+        original.ifPresent(team -> team.removePlayer(p, force));
+
+        if (target != null) target.addPlayer(p, force);
     }
 
     /**
