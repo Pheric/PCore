@@ -65,9 +65,7 @@ public class TeamManager {
             }
         }
         if (lowest == null) return false;
-        lowest.addPlayer(p);
-
-        return true;
+        return lowest.addPlayer(p, false);
     }
 
     /**
@@ -129,13 +127,12 @@ public class TeamManager {
      * Transfers a Player from one Team to another.
      * @param p the Player to transfer
      * @param target the team to add the player to (or null)
-     * @param force whether to override Team size checks and hidden status
      */
-    public void transferPlayer(Player p, @Nullable Team target, boolean force) {
+    public void transferPlayer(Player p, @Nullable Team target) {
         Optional<Team> original = getPlayerTeam(p);
-        original.ifPresent(team -> team.removePlayer(p, force));
+        original.ifPresent(team -> team.removePlayer(p, true));
 
-        if (target != null) target.addPlayer(p, force);
+        if (target != null) target.addPlayer(p, true);
     }
 
     /**
