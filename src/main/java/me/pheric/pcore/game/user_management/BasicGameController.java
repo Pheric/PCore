@@ -62,7 +62,7 @@ public class BasicGameController implements Listener {
         }
         Bukkit.broadcastMessage(ChatColor.translateAlternateColorCodes('&', GameChatFormat.JOIN.getFormat() + event.getPlayer().getDisplayName() + info));
 
-        if (game.getTeamManager().getTeams().stream().allMatch(t -> t.isAboveMinimums() && t.getPlayers().size() >= minPlayersToStart) && game.getState() == JOIN_WAIT) {
+        if (game.getTeamManager().getTeams().stream().filter(t -> !t.isHidden()).allMatch(t -> t.isAboveMinimums() && t.getPlayers().size() >= minPlayersToStart) && game.getState() == JOIN_WAIT) {
             game.setState(State.JOIN_CLOSED);
         }
 
@@ -144,11 +144,12 @@ public class BasicGameController implements Listener {
         StringBuilder ret = new StringBuilder("&7(");
         boolean first = true;
         for (Team t : game.getTeamManager().getTeams()) {
-            ret.append(String.format("&7%s&%s%c", first ? "" : "/", t.getTeamColor().getTeamChatColor().getChar(), t.isFull() ? '*' : t.getPlayers().size()));
+            if (t.isHidden()) continue;
+            ret.append(String.format("&7%s&%s%s", first ? "" : "/", t.getTeamColor().getTeamChatColor().getChar(), t.isFull() ? "*" : String.valueOf(t.getPlayers().size())));
 
             first = false;
         }
-        ret.append("&7/&l").append(game.getTeamManager().getMinTeamSize()).append("&7)");
+        ret.append("&7/&l").append(game.getTeamManager().getMinTeamSize()).append(":").append(game.getTeamManager().getMaxTeamSize()).append("&7)");
         return ret.toString();
     }
 }

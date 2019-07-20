@@ -56,7 +56,7 @@ public class TeamManager {
     public boolean autoAddPlayer(Player p) {
         Team lowest = null;
         for (Team t : teams) {
-            if (t.isSizeLocked()) continue;
+            if (t.isHidden()) continue;
 
             if (t.getPlayers().size() < t.getMaxPlayers()) {
                 if (lowest == null || t.getPlayers().size() < lowest.getPlayers().size()) {
@@ -129,7 +129,7 @@ public class TeamManager {
      * Transfers a Player from one Team to another.
      * @param p the Player to transfer
      * @param target the team to add the player to (or null)
-     * @param force whether to override Team size checks and locks
+     * @param force whether to override Team size checks and hidden status
      */
     public void transferPlayer(Player p, @Nullable Team target, boolean force) {
         Optional<Team> original = getPlayerTeam(p);

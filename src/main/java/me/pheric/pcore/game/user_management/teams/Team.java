@@ -26,7 +26,7 @@ public class Team {
     private int maxPlayers;
     private long maxScoreThreshold = Long.MAX_VALUE;
     private int scoreMultiplier = 1;
-    private boolean disabled = false;
+    private boolean hidden = false;
 
     private List<Player> players = new ArrayList<>();
     private long score = 0;
@@ -98,7 +98,7 @@ public class Team {
      * @return Whether the player can be added or not (whether the team is already full or not).
      */
     public boolean addPlayer(Player p) {
-        if (players.size() >= maxPlayers || isSizeLocked()) {
+        if (players.size() >= maxPlayers || isHidden()) {
             return false;
         }
 
@@ -107,14 +107,14 @@ public class Team {
     }
 
     /**
-     * Overload, see original. Adds a parameter to override size limits.
+     * Overload, see original. Adds a parameter to override size limits and hidden status (if applicable).
      *
      * @param p The player to add.
      * @return Whether the player would be added or not (whether the team is already full or not), ignoring the override.
      * @see Team#addPlayer(Player)
      */
     public boolean addPlayer(Player p, boolean ovr) {
-        if (!ovr && (players.size() >= maxPlayers || isSizeLocked())) {
+        if (!ovr && (players.size() >= maxPlayers || isHidden())) {
             return false;
         }
 
@@ -130,7 +130,7 @@ public class Team {
      * @return success
      */
     public boolean removePlayer(Player p) {
-        if (isSizeLocked()) return false;
+        if (isHidden()) return false;
         boolean ret = players.remove(p);
 
         if (players.size() <= minPlayersThreshold && ret)
@@ -140,17 +140,17 @@ public class Team {
     }
 
     /**
-     * Overload. See original. Normally, this function would fail if the Team is size locked.
+     * Overload. See original. Normally, this function would fail if the Team is hidden.
      * This function adds a parameter allowing the caller to disable this check.
      *
      * @param p The player to remove.
-     * @param ovr Whether to ignore the size lock
+     * @param ovr Whether to ignore the hidden status (if applicable)
      * @see Team#setMinPlayersThreshold(int)
      * @see Team#removePlayer(Player)
      * @return success
      */
     public boolean removePlayer(Player p, boolean ovr) {
-        if (isSizeLocked() && !ovr) return false;
+        if (isHidden() && !ovr) return false;
         boolean ret = players.remove(p);
 
         if (players.size() <= minPlayersThreshold && ret)
@@ -271,22 +271,22 @@ public class Team {
     }
 
     /**
-     * Whether the Team is size locked (players will not automatically join or leave this team)
+     * Whether the Team is hidden (players will not automatically join or leave this team, and it will be hidden from players, but not events)
      *
      * @return status
      */
-    public boolean isSizeLocked() {
-        return disabled;
+    public boolean isHidden() {
+        return hidden;
     }
 
     /**
-     * Sets whether the Team is size locked
+     * Sets whether the Team is hidden
      *
-     * @param disabled whether the Team is size locked
+     * @param disabled whether the Team is hidden
      * @return updated state
      */
-    public boolean setSizeLocked(boolean disabled) {
-        return this.disabled = disabled;
+    public boolean setHidden(boolean disabled) {
+        return this.hidden = disabled;
     }
 
     private ItemStack getColoredMaterial(Material material) {
