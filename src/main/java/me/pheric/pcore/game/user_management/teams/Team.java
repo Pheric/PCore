@@ -31,7 +31,7 @@ public class Team {
     private List<Player> players = new ArrayList<>();
     private long score = 0;
 
-    Team(String teamName, TeamColor teamColor, int maxTeamSize) {
+    public Team(String teamName, TeamColor teamColor, int maxTeamSize) {
         this.teamName = teamName;
         this.teamColor = teamColor;
         this.maxPlayers = maxTeamSize;
@@ -98,7 +98,23 @@ public class Team {
      * @return Whether the player can be added or not (whether the team is already full or not).
      */
     public boolean addPlayer(Player p) {
-        if (players.size() >= maxPlayers) {
+        if (players.size() >= maxPlayers || isSizeLocked()) {
+            return false;
+        }
+
+        players.add(p);
+        return true;
+    }
+
+    /**
+     * Overload, see original. Adds a parameter to override size limits.
+     *
+     * @param p The player to add.
+     * @return Whether the player would be added or not (whether the team is already full or not), ignoring the override.
+     * @see Team#addPlayer(Player)
+     */
+    public boolean addPlayer(Player p, boolean ovr) {
+        if (!ovr && (players.size() >= maxPlayers || isSizeLocked())) {
             return false;
         }
 
