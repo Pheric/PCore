@@ -4,15 +4,14 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.Builder;
 import lombok.Getter;
+import org.bukkit.plugin.PluginLogger;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.logging.Logger;
 
 /**
  * Manages and connects to a MySQL database
@@ -27,6 +26,7 @@ import java.util.List;
 public class Database {
 
     private HikariDataSource dataSource;
+    private Logger logger;
 
     /**
      * Initializes the class
@@ -35,6 +35,7 @@ public class Database {
      */
     public Database(HikariConfig config) {
         dataSource = new HikariDataSource(config);
+        logger = Logger.getGlobal();
     }
 
     @Builder
@@ -50,6 +51,7 @@ public class Database {
         config.setMaximumPoolSize(10);
 
         dataSource = new HikariDataSource(config);
+        logger = Logger.getGlobal();
     }
 
     /**
@@ -73,6 +75,8 @@ public class Database {
             // Execute the update and return the value
             return preparedStatement.executeUpdate();
         } catch (SQLException e) {
+            logger.severe("An error occurred while attempting to perform this SQL statement!");
+            logger.throwing("Database", "Database#update(String, Object...)", e);
             // Indicates an error
             return -1;
         }
@@ -101,18 +105,21 @@ public class Database {
             ResultSet resultSet = preparedStatement.executeQuery();
             // Initialize a new result based on
             Result result = new Result();
+            result.setMetaData(resultSet.getMetaData());
 
             // Check if the result set has anymore data for us
             if (resultSet.next()) {
                 // Loop through the columns
                 for (int i = 1; i <= resultSet.getMetaData().getColumnCount(); i++) {
                     // Set the result to the object found in the MySQL column
-                    result.set(resultSet.getMetaData().getColumnName(i), resultSet.getObject((i)));
+                    result.updateObject(resultSet.getMetaData().getColumnName(i), resultSet.getObject((i)));
                 }
             }
 
             return result;
         } catch (SQLException e) {
+            logger.severe("An error occurred while attempting to perform this SQL statement!");
+            logger.throwing("Database", "Database#find(String, Object...)", e);
             // Indicates an empty result
             return new Result();
         }
@@ -135,8 +142,9 @@ public class Database {
             List<Result> resultList = new ArrayList<>();
             while (resultSet.next()) {
                 Result result = new Result();
+                result.setMetaData(resultSet.getMetaData());
                 for (int i = 1; i <= resultSet.getMetaData().getColumnCount(); i++) {
-                    result.set(resultSet.getMetaData().getColumnName(i), resultSet.getObject((i)));
+                    result.updateObject(resultSet.getMetaData().getColumnName(i), resultSet.getObject((i)));
                 }
                 resultList.add(result);
             }
@@ -145,6 +153,8 @@ public class Database {
             connection.close();
             return resultList;
         } catch (SQLException e) {
+            logger.severe("An error occurred while attempting to perform this SQL statement!");
+            logger.throwing("Database", "Database#findAll(String, Object...)", e);
             // Indicates an empty result
             return Collections.emptyList();
         }
@@ -156,8 +166,24 @@ public class Database {
      * @return The {@link Connection} linked to the {@link #dataSource}
      * @throws SQLException If the connection is closed, or any other error occurs
      */
-    private Connection getConnection() throws SQLException {
+    public Connection getConnection() throws SQLException {
         return getDataSource().getConnection();
+    }
+
+    /**
+     * Grabs a new connection from the database pool
+     *
+     * @return The {@link Optional<Connection>} linked to the {@link #dataSource}
+     * @throws SQLException If the connection is closed, or any other error occurs
+     */
+    public Optional<Connection> getSafeConnection() {
+        try {
+            return Optional.ofNullable(getDataSource().getConnection());
+        } catch (SQLException e) {
+            logger.severe("An error occurred while attempting to grab the connection from the Hikari Pool!");
+            logger.throwing("Database", "Database#getSafeConnection()", e);
+            return Optional.empty();
+        }
     }
 
     /**
