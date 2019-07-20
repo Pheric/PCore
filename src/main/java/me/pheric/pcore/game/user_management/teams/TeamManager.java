@@ -1,5 +1,6 @@
 package me.pheric.pcore.game.user_management.teams;
 
+import jdk.internal.jline.internal.Nullable;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
@@ -55,6 +56,8 @@ public class TeamManager {
     public boolean autoAddPlayer(Player p) {
         Team lowest = null;
         for (Team t : teams) {
+            if (t.isHidden()) continue;
+
             if (t.getPlayers().size() < t.getMaxPlayers()) {
                 if (lowest == null || t.getPlayers().size() < lowest.getPlayers().size()) {
                     lowest = t;
@@ -62,9 +65,7 @@ public class TeamManager {
             }
         }
         if (lowest == null) return false;
-        lowest.addPlayer(p);
-
-        return true;
+        return lowest.addPlayer(p, false);
     }
 
     /**
@@ -120,6 +121,18 @@ public class TeamManager {
      */
     public boolean isTeamRegistered(String teamName) {
         return teams.stream().anyMatch(t -> t.getTeamName().equals(teamName));
+    }
+
+    /**
+     * Transfers a Player from one Team to another.
+     * @param p the Player to transfer
+     * @param target the team to add the player to (or null)
+     */
+    public void transferPlayer(Player p, @Nullable Team target) {
+        Optional<Team> original = getPlayerTeam(p);
+        original.ifPresent(team -> team.removePlayer(p, true));
+
+        if (target != null) target.addPlayer(p, true);
     }
 
     /**

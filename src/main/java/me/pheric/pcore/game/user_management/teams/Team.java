@@ -1,5 +1,7 @@
 package me.pheric.pcore.game.user_management.teams;
 
+import me.pheric.pcore.game.user_management.teams.events.TeamJoinEvent;
+import me.pheric.pcore.game.user_management.teams.events.TeamLeaveEvent;
 import me.pheric.pcore.game.user_management.teams.events.TeamScoreAboveThresholdEvent;
 import me.pheric.pcore.game.user_management.teams.events.TeamSizeBelowThresholdEvent;
 import org.bukkit.Bukkit;
@@ -26,11 +28,12 @@ public class Team {
     private int maxPlayers;
     private long maxScoreThreshold = Long.MAX_VALUE;
     private int scoreMultiplier = 1;
+    private boolean hidden = false;
 
     private List<Player> players = new ArrayList<>();
     private long score = 0;
 
-    Team(String teamName, TeamColor teamColor, int maxTeamSize) {
+    public Team(String teamName, TeamColor teamColor, int maxTeamSize) {
         this.teamName = teamName;
         this.teamColor = teamColor;
         this.maxPlayers = maxTeamSize;
@@ -91,32 +94,68 @@ public class Team {
     }
 
     /**
-     * Adds a player if they aren't already in this team.
+     * Adds a player if they aren't already in this team. Calls {@link TeamJoinEvent}
      *
      * @param p The player to add.
-     * @return Whether the player can be added or not (whether the team is already full or not).
+     * @return success
      */
     public boolean addPlayer(Player p) {
-        if (players.size() >= maxPlayers) {
-            return false;
-        }
-
+        Bukkit.getPluginManager().callEvent(new TeamJoinEvent(p, this));
         players.add(p);
         return true;
     }
 
     /**
-     * Removes a player if possible, and calls {@link TeamSizeBelowThresholdEvent} if the new team size is less than the minimum threshold.
+     * Overload, see original. Adds a parameter to override size limits and hidden status (if applicable).
+     *
+     * @param p The player to add.
+     * @return success
+     * @see Team#addPlayer(Player)
+     */
+    public boolean addPlayer(Player p, boolean ovr) {
+        if (ovr) {
+            return addPlayer(p);
+        } else if (players.size() < maxPlayers && !isHidden()) {
+            return addPlayer(p);
+        }
+
+        return false;
+    }
+
+    /**
+     * Removes a player if possible, and calls {@link TeamSizeBelowThresholdEvent} if the new team size is less than the minimum threshold. Calls {@link TeamLeaveEvent} if successful.
      *
      * @param p The player to remove.
      * @see Team#setMinPlayersThreshold(int)
+     * @return success
      */
-    public void removePlayer(Player p) {
-        players.remove(p);
+    public boolean removePlayer(Player p) {
+        boolean ret = players.remove(p);
 
-        if (players.size() <= minPlayersThreshold) {
-            Bukkit.getPluginManager().callEvent(new TeamSizeBelowThresholdEvent(this, p));
+        if (ret) {
+            Bukkit.getPluginManager().callEvent(new TeamLeaveEvent(p, this));
+
+            if (players.size() <= minPlayersThreshold)
+                Bukkit.getPluginManager().callEvent(new TeamSizeBelowThresholdEvent(this, p));
         }
+
+        return ret;
+    }
+
+    /**
+     * Overload. See original. Normally, this function would fail if the Team is hidden.
+     * This function adds a parameter allowing the caller to disable this check.
+     *
+     * @param p The player to remove.
+     * @param ovr Whether to ignore the hidden status (if applicable)
+     * @see Team#setMinPlayersThreshold(int)
+     * @see Team#removePlayer(Player)
+     * @return success
+     */
+    public boolean removePlayer(Player p, boolean ovr) {
+        if (isHidden() && !ovr) return false;
+
+        return removePlayer(p);
     }
 
     /**
@@ -177,11 +216,20 @@ public class Team {
     }
 
     /**
-     * Whether the team size is above the minimum
+     * Whether the team size equals or exceeds the maximum team size
      *
-     * @return whether the team size is above the minimum
+     * @return whether the team size equals or exceeds the maximum team size
      */
     public boolean isFull() {
+        return players.size() >= maxPlayers;
+    }
+
+    /**
+     * Whether the team size meets the minimum size
+     *
+     * @return whether the team size meets the minimum size
+     */
+    public boolean isAboveMinimums() {
         return players.size() >= minPlayersThreshold;
     }
 
@@ -219,6 +267,25 @@ public class Team {
      */
     public int getScoreMultiplier() {
         return scoreMultiplier;
+    }
+
+    /**
+     * Whether the Team is hidden (players will not automatically join or leave this team, and it will be hidden from players, but not events)
+     *
+     * @return status
+     */
+    public boolean isHidden() {
+        return hidden;
+    }
+
+    /**
+     * Sets whether the Team is hidden
+     *
+     * @param disabled whether the Team is hidden
+     * @return updated state
+     */
+    public boolean setHidden(boolean disabled) {
+        return this.hidden = disabled;
     }
 
     private ItemStack getColoredMaterial(Material material) {
